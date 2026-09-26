@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Checador · Cashless Colombia RRHH</title>
+<meta name="theme-color" content="#0b1034">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-96.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="app.css">
+<style>
+  body{background:radial-gradient(1100px 600px at 15% 0%,#2a3f8f 0%,transparent 60%),radial-gradient(900px 600px at 100% 100%,#7e22ce 0%,transparent 55%),#0b1034;color:#fff;min-height:100vh}
+  .kiosk{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:20px 16px 14px;text-align:center}
+  .kiosk .logo{width:min(220px,46vw);filter:drop-shadow(0 0 24px rgba(80,120,255,.5))}
+  .clock{font-size:clamp(54px,14vw,120px);font-weight:800;letter-spacing:.02em;line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(90deg,#22d3ee,#7c8cff,#d946ef);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .date{font-size:clamp(14px,3.2vw,22px);color:#c7d2fe;margin-top:8px}.date:first-letter{text-transform:uppercase}
+  .actions{display:grid;gap:14px;width:min(520px,100%);margin:26px 0}
+  .kbtn{border:0;border-radius:18px;padding:22px 18px;font:800 clamp(18px,4.6vw,24px) Inter,sans-serif;color:#fff;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:12px}
+  .kbtn:active{transform:scale(.98)}
+  .kbtn.nfc{background:linear-gradient(90deg,#2563eb,#7c3aed);box-shadow:0 10px 30px rgba(99,102,241,.45)}
+  .kbtn.face{background:linear-gradient(90deg,#0ea5e9,#2563eb);box-shadow:0 10px 30px rgba(14,165,233,.45)}
+  .kbtn:disabled{opacity:.45;cursor:not-allowed}
+  .kbtn.nfc.on{background:linear-gradient(90deg,#059669,#10b981);box-shadow:0 0 0 0 rgba(16,185,129,.7);animation:pulse 1.6s infinite}
+  .kbtn.out{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.35)}
+  @keyframes pulse{70%{box-shadow:0 0 0 22px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+  .status{min-height:22px;color:#a5b4fc;font-size:14px}
+  .foot{font-size:12px;color:#8391c7;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:center}
+  .foot a{color:#a5b4fc}
+  .dot{width:9px;height:9px;border-radius:50%;background:#10b981;display:inline-block;margin-right:6px}
+  .dot.off{background:#ef4444}
+  .banner{background:#7f1d1d;color:#fff;padding:12px 16px;border-radius:12px;max-width:640px;font-size:13px}
+  /* resultado */
+  .res-back{position:fixed;inset:0;display:grid;place-items:center;z-index:300;padding:16px;background:rgba(5,8,30,.8);backdrop-filter:blur(6px)}
+  .res{background:#fff;color:#1e2a4a;border-radius:24px;width:min(460px,100%);padding:26px 22px 22px;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.6);animation:pop .25s}
+  @keyframes pop{from{transform:scale(.85);opacity:0}}
+  .res.ok{border-top:10px solid #16a34a}.res.bad{border-top:10px solid #dc2626}
+  .res .photo{width:150px;height:150px;border-radius:50%;margin:0 auto 12px;background:#e3ebff;display:grid;place-items:center;font-size:48px;font-weight:800;color:#3b5bdb;overflow:hidden;border:5px solid #16a34a}
+  .res .photo img{width:100%;height:100%;object-fit:cover}
+  .res h2{font-size:26px;margin:6px 0 2px}
+  .res .big{font-size:20px;font-weight:800}
+  .checkwrap{position:relative;width:130px;height:130px;margin:-6px auto 0}
+  .checkwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent}
+  .checkwrap svg{position:absolute;inset:14px;width:102px;height:102px}
+  .checkwrap circle{fill:#16a34a}
+  .checkwrap path{stroke:#fff;stroke-width:9;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:80;stroke-dashoffset:80;animation:draw .5s .15s forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .xmark{width:110px;height:110px;border-radius:50%;background:#dc2626;margin:0 auto 10px;display:grid;place-items:center;font-size:64px;color:#fff;font-weight:800;animation:shake .4s}
+  @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  .res .tag{display:inline-block;padding:6px 16px;border-radius:99px;font-weight:800;font-size:14px;margin-top:8px}
+  .cedula-in{font-size:30px;text-align:center;letter-spacing:.12em;padding:16px}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .pad button{padding:16px;font:700 22px Inter;border-radius:12px;border:1px solid var(--line);background:#f4f6fc;cursor:pointer;color:var(--navy)}
+  .pad button:active{background:#dbe4ff}
+</style>
+</head>
+<body>
+<div class="kiosk">
+  <img class="logo" src="tapwork_logo.png" alt="Tapwork">
+  <div>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="date" id="date"></div>
+    <div class="actions">
+      <button class="kbtn face" id="btnFace">🙂 Reconocimiento facial</button>
+      <button class="kbtn nfc" id="btnNfc">📡 Leer tag NFC</button>
+      <button class="kbtn out" id="btnCed">🪪 Salida con número de cédula</button>
+    </div>
+    <div class="status" id="status">Presione “Leer tag NFC” y acerque su tag al lector</div>
+  </div>
+  <div style="width:100%;display:grid;gap:10px;justify-items:center">
+    <div id="banner"></div>
+    <div class="foot">
+      <span><span class="dot" id="dot"></span><span id="conn">Conectando…</span></span>
+      <a href="colaborador.html">Portal del colaborador</a>
+      <a href="admin.html">Administración</a>
+      <a href="#" id="btnInstall">Instalar app</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="core.js"></script>
+<script src="face.js"></script>
+<script>
+/* ---------------- reloj ---------------- */
+const tick = () => {
+  const n = new Date();
+  $('#clock').textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  $('#date').textContent = n.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+};
+setInterval(tick, 1000); tick();
+
+/* ---------------- estado ---------------- */
+let TURNOS = [], scanner = null, lastScan = { tag: '', t: 0 }, busy = false;
+const NOTA_ALM = 'Salida a almuerzo', NOTA_ALM_AUTO = 'Salida a almuerzo (asumida por el sistema)', NOTA_REG_AUTO = 'Regreso de almuerzo (asumido por el sistema)';
+
+async function init() {
+  registerSW();
+  try {
+    await loadConfig();
+    const { data, error } = await sb.from('turnos').select('*').eq('activo', true);
+    if (error) throw error;
+    TURNOS = data || [];
+    $('#conn').textContent = 'Conectado a la base de datos'; $('#dot').classList.remove('off');
+    aplicarModulo();
+    FACE.hasAny().then(y => { if (y) FACE.init().catch(() => { }); });   // precarga modelos y rostros: el botón responde al instante
+  } catch (e) {
+    $('#dot').classList.add('off'); $('#conn').textContent = 'Sin conexión con la base de datos';
+    $('#banner').innerHTML = `<div class="banner">${isMissingTable(e) ? 'Las tablas no existen aún: ejecute <b>schema.sql</b> en el SQL Editor de Supabase.' : h(errMsg(e))}</div>`;
+  }
+}
+function aplicarModulo() {
+  const on = CFG.modulos.asistencia !== false;
+  $('#btnNfc').disabled = !on; $('#btnCed').disabled = !on; $('#btnFace').disabled = !on;
+  $('#status').textContent = on ? 'Presione “Leer tag NFC” y acerque su tag al lector' : '⛔ El control de asistencia está deshabilitado por el administrador';
+}
+setInterval(async () => { try { await loadConfig(); aplicarModulo(); } catch (e) { } }, 60000);
+
+/* ---------------- resultado (ventana emergente) ---------------- */
+function hablar(txt) {
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang = 'es-CO'; u.rate = .95; speechSynthesis.speak(u); } catch (e) { }
+}
+function mostrarResultado(ok, { colab, titulo, detalle, tag, tagCls }) {
+  $('.res-back')?.remove();
+  const back = document.createElement('div'); back.className = 'res-back';
+  if (ok) {
+    const u = driveUrl(colab.foto_url);
+    back.innerHTML = `<div class="res ok">
+      <div class="checkwrap"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50"/><path d="M27 52l16 16 31-33"/></svg>
+      <iframe src="https://lottie.host/embed/31f2519c-697f-44d5-8bf1-20ae2d503942/i5XOWPu1DL.lottie" title="ok"></iframe></div>
+      <div class="photo">${u ? `<img src="${h(u)}" referrerpolicy="no-referrer" onerror="this.parentNode.textContent='${h(initials(colab))}'">` : h(initials(colab))}</div>
+      <h2>${h(nombreCompleto(colab))}</h2><div class="muted">${h(colab.cargo || '')}${colab.area ? ' · ' + h(colab.area) : ''}</div>
+      <div class="big mt">${h(titulo)}</div><div class="muted">${h(detalle)}</div>
+      ${tag ? `<span class="tag badge ${tagCls}">${h(tag)}</span>` : ''}
+      <h3 style="color:#16a34a;margin-top:14px">✔ Registro confirmado</h3></div>`;
+    hablar('registro confirmado');
+  } else {
+    back.innerHTML = `<div class="res bad"><div class="xmark">✕</div><h2 style="color:#dc2626">No fue correcto</h2><div class="muted" style="font-size:16px">${h(detalle)}</div></div>`;
+    hablar('no fue correcto');
+  }
+  document.body.appendChild(back);
+  const t = setTimeout(() => back.remove(), ok ? 4500 : 3800);
+  back.onclick = () => { clearTimeout(t); back.remove(); };
+}
+
+/* ---------------- lógica de registro ---------------- */
+function turnoDe(c) { return TURNOS.find(t => t.id === c.turno_id) || DEFAULT_TURNO; }
+
+async function registrar(colab, forzarTipo, origen, similitud) {
+  if (busy) return; busy = true;
+  try {
+    if (CFG.modulos.asistencia === false) throw new Error('El control de asistencia está deshabilitado.');
+    if (!colab) throw new Error(origen === 'nfc' ? 'Tag no registrado en el sistema.' : origen === 'facial' ? 'Rostro no registrado en el sistema.' : 'Cédula no registrada en el sistema.');
+    if (colab.estado !== 'activo') throw new Error('Colaborador inactivo. Comuníquese con Talento Humano.');
+    const now = new Date(), fecha = ymd(now), turno = turnoDe(colab), tol = turno.tolerancia_min ?? CFG.params.tolerancia_min ?? 5;
+    const { data: last, error: e1 } = await sb.from('marcaciones').select('*').eq('colaborador_id', colab.id).order('ts', { ascending: false }).limit(1);
+    if (e1) throw e1;
+    const ult = last && last[0];
+    if (ult && (now - new Date(ult.ts)) < 60000) throw new Error('Lectura duplicada: ya registró hace ' + Math.max(1, Math.round((now - new Date(ult.ts)) / 1000)) + ' s.');
+    const abierto = ult && ult.tipo === 'ingreso' && (now - new Date(ult.ts)) < 20 * 3600e3;
+    if (forzarTipo === 'salida' && !abierto) throw new Error('No tiene un ingreso abierto para registrar la salida.');
+    const tipo = abierto ? 'salida' : 'ingreso';
+    const partida = turno.tipo === 'partida' && turno.almuerzo_inicio && turno.almuerzo_fin;
+    const base = abierto ? ult.fecha : fecha;                                   // el turno se asocia a la fecha del ingreso
+    const inserts = []; let nota = null, esp = null, evalua = true, etiqueta = '';
+    const ls = partida ? tAt(base, turno.almuerzo_inicio) : null, le = partida ? tAt(base, turno.almuerzo_fin) : null;
+    let fin = tAt(base, turno.hora_fin); if (tMin(turno.hora_fin) <= tMin(turno.hora_inicio)) fin = addDays(fin, 1);
+    const finMedio = partida ? new Date((le.getTime() + fin.getTime()) / 2) : null;
+    let tipoFinal = tipo;
+    // Ausencia temporal solicitada por el colaborador (portal): la salida/regreso del checador debe coincidir con ella
+    let aus = null, ausRet = null;
+    if (tipo === 'salida') {
+      const { data: pa } = await sb.from('permisos').select('*').eq('colaborador_id', colab.id).eq('tipo', 'ausencia_temporal').eq('fecha_inicio', fecha).is('marcacion_salida_id', null).in('estado', ['pendiente', 'aceptado']).order('hora_salida');
+      aus = (pa && pa[0]) || null;
+    } else if (ult && ult.tipo === 'salida' && ult.fecha === fecha && /^Ausencia temporal/i.test(ult.nota || '')) {
+      const { data: pr } = await sb.from('permisos').select('*').eq('marcacion_salida_id', ult.id).maybeSingle();
+      ausRet = pr || null;
+    }
+
+    if (tipo === 'ingreso' && ausRet) {
+      esp = new Date(new Date(ult.ts).getTime() + (ausRet.duracion_min || 0) * 60000); etiqueta = 'Regreso de ausencia temporal';
+      nota = `Regreso de ausencia temporal (autorizada: ${ausRet.duracion_min} min)${ausRet.regresa_mismo_dia === false ? ' · había indicado que no regresaría' : ''}`;
+    } else if (tipo === 'ingreso') {
+      const regreso = partida && ult && ult.tipo === 'salida' && ult.fecha === fecha && /almuerzo/i.test(ult.nota || '');
+      if (regreso) { esp = le; etiqueta = 'Regreso de almuerzo'; nota = 'Regreso de almuerzo'; }
+      else if (ult && ult.fecha === fecha && ult.tipo === 'salida') { evalua = false; nota = 'Nuevo ingreso en el día'; etiqueta = 'Ingreso'; }
+      else { esp = tAt(fecha, turno.hora_inicio); etiqueta = 'Ingreso'; if (!(turno.dias || [1, 2, 3, 4, 5]).includes(now.getDay())) { evalua = false; nota = 'Día no programado en el turno'; } }
+    } else if (aus) {
+      nota = `Ausencia temporal ${aus.estado === 'aceptado' ? 'autorizada' : 'solicitada (pendiente de aprobación)'}: ${aus.duracion_min} min · ${aus.regresa_mismo_dia === false ? 'no regresa hoy' : 'regresa hoy'}`;
+      evalua = false; etiqueta = 'Salida por ausencia temporal';
+    } else {
+      // hay un ingreso abierto
+      const manana = partida && ult.fecha === fecha && new Date(ult.ts) < ls;   // ingreso de la mañana, sin haber salido a almorzar
+      if (manana && now >= ls && now < le) { nota = NOTA_ALM; evalua = false; etiqueta = 'Salida a almuerzo'; }
+      else if (manana && now >= le && forzarTipo !== 'salida' && now < finMedio) {
+        // no marcó salida a almorzar y ahora vuelve: se asume que salió y esta lectura es el regreso
+        inserts.push({ tipo: 'salida', ts: ls, nota: NOTA_ALM_AUTO, origen: 'auto', puntualidad: null, diff_min: null });
+        tipoFinal = 'ingreso'; esp = le; etiqueta = 'Regreso de almuerzo'; nota = 'Regreso de almuerzo';
+      } else {
+        if (manana && now >= le) { // salida final sin haber marcado almuerzo → se asume almuerzo cumplido
+          inserts.push({ tipo: 'salida', ts: ls, nota: NOTA_ALM_AUTO, origen: 'auto', puntualidad: null, diff_min: null });
+          inserts.push({ tipo: 'ingreso', ts: le, nota: NOTA_REG_AUTO, origen: 'auto', puntualidad: null, diff_min: null });
+        }
+        esp = fin; etiqueta = 'Salida';
+      }
+    }
+    let pu = { puntualidad: null, diff_min: null };
+    if (esp && evalua) pu = evaluarPuntualidad(tipoFinal, now, esp, tol);
+    inserts.push({ tipo: tipoFinal, ts: now, nota, origen, ...pu });
+
+    const rows = inserts.map(r => ({ colaborador_id: colab.id, fecha: base, ts: new Date(r.ts).toISOString(), tipo: r.tipo, origen: r.origen === 'auto' ? 'auto' : origen, puntualidad: r.puntualidad, diff_min: r.diff_min, turno_id: colab.turno_id, turno: snapTurno(turno), nota: r.nota, ...(origen === 'facial' && r.origen !== 'auto' ? { similitud: +similitud.toFixed(3) } : {}) }));
+    if (tipoFinal === 'ingreso' && !abierto) rows.forEach(r => r.fecha = fecha);
+    const { data: ins, error: e2 } = await sb.from('marcaciones').insert(rows).select('id');
+    if (e2) throw e2;
+    const idFinal = ins && ins.length ? ins[ins.length - 1].id : null;
+    if (idFinal && aus) await sb.from('permisos').update({ marcacion_salida_id: idFinal }).eq('id', aus.id);
+    if (idFinal && ausRet) await sb.from('permisos').update({ marcacion_regreso_id: idFinal }).eq('id', ausRet.id);
+    const m = { tipo: tipoFinal, ...pu };
+    const etq = pu.puntualidad ? PUNT_LABEL[tipoFinal][pu.puntualidad] + (pu.puntualidad !== 'a_tiempo' ? ` (${pu.diff_min > 0 ? '+' : ''}${pu.diff_min} min)` : '') : '';
+    notify(tipoFinal, `${tipoFinal === 'ingreso' ? '🟢' : '🔴'} ${etiqueta || tipoFinal}: ${nombreCompleto(colab)}`, `${fmtTime(now)} · ${turnoTxt(turno)}${etq ? ' · ' + etq : ''}${nota ? ' · ' + nota : ''}`, colab.id);
+    const cls = !pu.puntualidad ? 'blue' : tipoFinal === 'salida' ? (pu.puntualidad === 'a_tiempo' ? 'green' : pu.puntualidad === 'temprano' ? 'red' : 'amber') : PUNT_CLS[pu.puntualidad];
+    mostrarResultado(true, { colab, titulo: `${etiqueta || (tipoFinal === 'ingreso' ? 'Ingreso' : 'Salida')} · ${fmtTime(now)}`, detalle: `${turno.nombre} · ${turnoTxt(turno)}`, tag: etq, tagCls: cls });
+    $('#status').textContent = `Último registro: ${nombreCompleto(colab)} · ${fmtTime(now)}`;
+  } catch (e) {
+    mostrarResultado(false, { detalle: errMsg(e) });
+  } finally { busy = false; }
+}
+
+/* ---------------- NFC ---------------- */
+async function porTag(tag) {
+  if (!tag) return;
+  const nowt = Date.now();
+  if (tag === lastScan.tag && nowt - lastScan.t < 8000) return;      // anti doble lectura del lector
+  lastScan = { tag, t: nowt };
+  const { data, error } = await sb.from('colaboradores').select('*').eq('nfc_tag', tag).maybeSingle();
+  if (error) { mostrarResultado(false, { detalle: errMsg(error) }); return; }
+  registrar(data, null, 'nfc');
+}
+$('#btnNfc').onclick = async () => {
+  const b = $('#btnNfc');
+  if (scanner) { scanner.stop(); scanner = null; b.classList.remove('on'); b.textContent = '📡 Leer tag NFC'; $('#status').textContent = 'Lector NFC detenido'; return; }
+  try {
+    scanner = await nfcScan(porTag, m => $('#status').textContent = m);
+    b.classList.add('on'); b.textContent = '📡 Lector activo · acerque su tag'; $('#status').textContent = 'Acerque el tag al lector del dispositivo…';
+    hablar('');
+  } catch (e) { $('#status').textContent = errMsg(e); mostrarResultado(false, { detalle: errMsg(e) }); }
+};
+// lectores USB/Bluetooth tipo teclado: escriben el UID y Enter
+let kb = '', kbT = 0;
+document.addEventListener('keydown', ev => {
+  if (ev.target.tagName === 'INPUT') return;
+  const n = Date.now(); if (n - kbT > 120) kb = ''; kbT = n;
+  if (ev.key === 'Enter') { if (kb.length >= 6) porTag(normTag(kb)); kb = ''; }
+  else if (ev.key.length === 1) kb += ev.key;
+});
+
+/* ---------------- reconocimiento facial ---------------- */
+$('#btnFace').onclick = async () => {
+  if (busy) return;
+  const b = $('#btnFace'); b.disabled = true;
+  try {
+    const r = await FACE.verify();
+    if (!r) return;                                                   // cancelado
+    const { data, error } = await sb.from('colaboradores').select('*').eq('id', r.colaborador_id).maybeSingle();
+    if (error) throw error;
+    await registrar(data, null, 'facial', r.similitud);
+  } catch (e) { mostrarResultado(false, { detalle: errMsg(e) }); }
+  finally { b.disabled = CFG.modulos.asistencia === false; }
+};
+
+/* ---------------- salida con cédula ---------------- */
+$('#btnCed').onclick = () => {
+  const m = modal({
+    title: 'Salida con número de cédula',
+    html: `<input id="ced" class="cedula-in" inputmode="numeric" placeholder="Número de cédula" autocomplete="off">
+      <div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, '✔'].map(k => `<button data-k="${k}">${k}</button>`).join('')}</div>`,
+    buttons: [{ t: 'Cancelar' }, { t: 'Registrar salida', cls: 'primary', fn: async () => { const v = $('#ced', m.el).value.replace(/\D/g, ''); if (!v) return false; m.close(); await enviarCedula(v); return false; } }]
+  });
+  const inp = $('#ced', m.el); inp.focus();
+  $$('.pad button', m.el).forEach(b => b.onclick = () => {
+    const k = b.dataset.k; if (k === '⌫') inp.value = inp.value.slice(0, -1); else if (k === '✔') $$('.modal-foot .btn', m.el)[1].click(); else inp.value += k;
+  });
+  inp.onkeydown = e => { if (e.key === 'Enter') $$('.modal-foot .btn', m.el)[1].click(); };
+};
+async function enviarCedula(ced) {
+  const { data, error } = await sb.from('colaboradores').select('*').eq('cedula', ced).maybeSingle();
+  if (error) return mostrarResultado(false, { detalle: errMsg(error) });
+  registrar(data, 'salida', 'cedula');
+}
+$('#btnInstall').onclick = e => { e.preventDefault(); installApp(); };
+init();
+</script>
+</body>
+</html>
