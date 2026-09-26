@@ -1,0 +1,22 @@
+{
+  "name": "Tapwork · Software de Talento Humano",
+  "short_name": "Tapwork",
+  "description": "Control de asistencia, nómina y gestión de talento humano bajo la legislación colombiana.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a75",
+  "lang": "es-CO",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Checador", "url": "./index.html", "icons": [{ "src": "icon-96.png", "sizes": "96x96" }] },
+    { "name": "Administración", "url": "./admin.html", "icons": [{ "src": "icon-96.png", "sizes": "96x96" }] },
+    { "name": "Portal del colaborador", "url": "./colaborador.html", "icons": [{ "src": "icon-96.png", "sizes": "96x96" }] }
+  ]
+}

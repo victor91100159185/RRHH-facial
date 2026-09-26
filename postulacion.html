@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trabaje con nosotros · Cashless Colombia</title>
+<meta name="theme-color" content="#0b1034">
+<link rel="icon" href="icon-96.png">
+<link rel="stylesheet" href="app.css">
+<style>
+  body{background:radial-gradient(1000px 500px at 10% 0%,#2a3f8f 0%,transparent 60%),radial-gradient(800px 500px at 100% 100%,#6b21a8 0%,transparent 55%),#0b1034;min-height:100vh}
+  .wrap{max-width:860px;margin:0 auto;padding:22px 16px 60px}
+  .hero{text-align:center;color:#fff;padding:10px 0 22px}
+  .hero img{width:260px;max-width:80%;filter:drop-shadow(0 0 22px rgba(80,120,255,.5))}
+  .hero h1{color:#fff;font-size:30px;margin-top:6px}
+  .hero p{color:#c7d2fe;margin:6px 0 0}
+  .vcard{border:2px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;background:#fff;transition:.15s}
+  .vcard:hover{border-color:#a5b4fc}.vcard.on{border-color:var(--primary);background:#f5f8ff}
+  .vdet{background:#f7f8fd;border-radius:12px;padding:14px;margin:12px 0;white-space:pre-line}
+  .ok{text-align:center;padding:26px 10px}.ok .big{font-size:64px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><img src="tapwork_logo.png" alt="Tapwork"><h1>Trabaje con nosotros</h1><p>Postúlese a nuestras vacantes abiertas. Solo necesita el enlace de Google Drive de su hoja de vida.</p></div>
+  <div id="app"><div class="card"><div class="empty">Cargando vacantes…</div></div></div>
+  <p class="center small" style="color:#8391c7;margin-top:18px"><a href="index.html" style="color:#a5b4fc">Checador</a> · <a href="colaborador.html" style="color:#a5b4fc">Portal del colaborador</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="core.js"></script>
+<script>
+let V = [], sel = new URLSearchParams(location.search).get('v') || '';
+const urlOk = u => { try { return /^https?:$/.test(new URL(u).protocol); } catch (e) { return false; } };
+async function init() {
+  try {
+    try { await loadConfig(); } catch (e) { }
+    const hoy = ymd(new Date());
+    const { data, error } = await sb.from('vacantes').select('*').eq('estado', 'abierta').eq('publica', true).order('created_at', { ascending: false });
+    if (error) throw error;
+    V = (data || []).filter(v => !v.fecha_limite || v.fecha_limite >= hoy);
+    if (!V.some(v => v.id === sel)) sel = V.length === 1 ? V[0].id : '';
+    pintar();
+  } catch (e) {
+    $('#app').innerHTML = `<div class="card"><h3>Portal no disponible</h3><p class="muted">${isMissingTable(e) ? 'El portal aún no está configurado.' : h(errMsg(e))}</p></div>`;
+  }
+}
+const sueldo = v => v.salario_min || v.salario_max ? `${v.salario_min ? money(v.salario_min) : ''}${v.salario_min && v.salario_max ? ' – ' : ''}${v.salario_max ? money(v.salario_max) : ''}` : 'A convenir';
+function pintar() {
+  if (!V.length) { $('#app').innerHTML = '<div class="card"><div class="empty">Por ahora no hay vacantes abiertas. ¡Vuelva pronto!</div></div>'; return; }
+  const v = V.find(x => x.id === sel);
+  $('#app').innerHTML = `<div class="card mb"><h2>Vacantes abiertas (${V.length})</h2><div class="grid2 mt">${V.map(x => `<div class="vcard ${x.id === sel ? 'on' : ''}" data-id="${x.id}"><b>${h(x.titulo)}</b><div class="small muted">${[x.area, x.ciudad, x.modalidad].filter(Boolean).map(h).join(' · ')}</div><div class="small mt">${h(x.tipo_contrato || '')} · ${sueldo(x)}</div></div>`).join('')}</div>
+    ${v ? `<div class="vdet"><b>${h(v.titulo)}</b>${v.descripcion ? '\n\n' + h(v.descripcion) : ''}${v.funciones ? '\n\n<b>Funciones</b>\n' + h(v.funciones) : ''}${v.requisitos ? '\n\n<b>Requisitos</b>\n' + h(v.requisitos) : ''}${v.competencias ? '\n\n<b>Competencias</b>\n' + h(v.competencias) : ''}</div>` : ''}</div>
+  <form class="card" id="f" autocomplete="on"><h2>Sus datos</h2>
+    <div class="grid2 mt"><div class="field full"><label>Vacante a la que aplica *</label><select id="fV" required><option value="">— Seleccione —</option>${V.map(x => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${h(x.titulo)}</option>`).join('')}</select></div>
+      <div class="field"><label>Nombres *</label><input id="fN" required autocomplete="given-name"></div><div class="field"><label>Apellidos *</label><input id="fA" required autocomplete="family-name"></div>
+      <div class="field"><label>Cédula</label><input id="fC" inputmode="numeric"></div><div class="field"><label>Ciudad</label><input id="fCi" autocomplete="address-level2"></div>
+      <div class="field"><label>Correo *</label><input id="fE" type="email" required autocomplete="email"></div><div class="field"><label>Teléfono / WhatsApp *</label><input id="fT" type="tel" required autocomplete="tel"></div>
+      <div class="field"><label>Aspiración salarial (COP)</label><input id="fS" type="number" min="0" step="50000"></div><div class="field"></div>
+      <div class="field full"><label>Enlace de Google Drive de su hoja de vida *</label><input id="fH" type="url" required placeholder="https://drive.google.com/file/d/…/view">
+        <div class="hint">📎 No suba archivos aquí. Suba su hoja de vida (PDF) a su Google Drive → clic derecho → <b>Compartir</b> → <b>“Cualquier persona con el enlace”</b> (lector) → copie el enlace y péguelo.</div></div>
+      <div class="field full"><label>Enlace de otros documentos (opcional)</label><input id="fD" type="url" placeholder="Carpeta de Drive con certificados, portafolio…"></div>
+      <div class="field full"><label>LinkedIn o portafolio (opcional)</label><input id="fL" type="url"></div>
+      <input id="fHp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+      <div class="field full"><label class="chk" style="align-items:flex-start"><input type="checkbox" id="fOk" required> <span>Autorizo a ${h(CFG.empresa.nombre || 'la empresa')} el tratamiento de mis datos personales para procesos de selección, conforme a la Ley 1581 de 2012 (habeas data). Puedo solicitar su actualización o eliminación en cualquier momento.</span></label></div></div>
+    <button class="btn primary" style="width:100%;padding:14px;font-size:15px" id="fB">Enviar postulación</button></form>`;
+  $$('.vcard').forEach(c => c.onclick = () => { sel = c.dataset.id; pintar(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  $('#fV').onchange = e => { sel = e.target.value; pintar(); };
+  $('#f').onsubmit = async ev => {
+    ev.preventDefault(); if ($('#fHp').value) return;                        // anti-spam
+    const b = $('#fB'); b.disabled = true; b.textContent = 'Enviando…';
+    try {
+      const hv = $('#fH').value.trim(); if (!urlOk(hv)) throw new Error('El enlace de la hoja de vida no es válido.');
+      for (const id of ['fD', 'fL']) { const x = $('#' + id).value.trim(); if (x && !urlOk(x)) throw new Error('Revise los enlaces: deben empezar por https://'); }
+      const vac = V.find(x => x.id === $('#fV').value); if (!vac) throw new Error('Seleccione una vacante.');
+      const correo = $('#fE').value.trim().toLowerCase();
+      const { data: dup } = await sb.from('candidatos').select('id').eq('vacante_id', vac.id).eq('correo', correo).limit(1);
+      if (dup && dup.length) throw new Error('Ya recibimos una postulación con este correo para esta vacante.');
+      const { error } = await sb.from('candidatos').insert({ vacante_id: vac.id, nombres: $('#fN').value.trim(), apellidos: $('#fA').value.trim(), cedula: $('#fC').value.replace(/\D/g, '') || null, correo, telefono: $('#fT').value.trim(), ciudad: $('#fCi').value.trim() || null, salario_aspirado: $('#fS').value ? Number($('#fS').value) : null, hoja_vida_url: hv, documentos_url: $('#fD').value.trim() || null, linkedin_url: $('#fL').value.trim() || null, fuente: 'Portal de empleo', etapa: 'nuevo', acepta_datos: true });
+      if (error) throw error;
+      notify('candidato', `🧑‍💼 Nueva postulación: ${$('#fN').value.trim()} ${$('#fA').value.trim()}`, vac.titulo, null);
+      $('#app').innerHTML = `<div class="card ok"><div class="big">✅</div><h2>¡Postulación recibida!</h2><p class="muted">Gracias por su interés en <b>${h(vac.titulo)}</b>. Nuestro equipo de talento humano revisará su hoja de vida y lo contactará si su perfil avanza en el proceso.</p><p class="small muted">Recuerde mantener su enlace de Drive compartido para que podamos verla.</p><button class="btn primary" onclick="location.reload()">Ver otras vacantes</button></div>`;
+    } catch (e) { toast(errMsg(e), 'err'); b.disabled = false; b.textContent = 'Enviar postulación'; }
+  };
+}
+init();
+</script>
+</body>
+</html>

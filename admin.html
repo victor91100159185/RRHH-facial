@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Administración · Cashless Colombia RRHH</title>
+<meta name="theme-color" content="#1e3a75">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-96.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<!-- LOGIN -->
+<div id="login" class="login-wrap">
+  <form class="login-card" id="loginForm" autocomplete="on">
+    <img src="logo.png" alt="Cashless Colombia">
+    <h2 class="center" style="margin:10px 0 2px">Panel de administración</h2>
+    <p class="muted center" style="margin:0 0 18px">Ingrese con su usuario y contraseña</p>
+    <div class="field"><label>Usuario</label><input id="lUser" name="username" autocomplete="username" placeholder="admin" required></div>
+    <div class="field"><label>Contraseña</label><input id="lPass" name="password" type="password" autocomplete="current-password" required></div>
+    <div id="lErr" class="badge red hidden" style="margin-bottom:10px"></div>
+    <button class="btn primary" style="width:100%;padding:12px">Ingresar</button>
+    <div class="center small muted mt"><a href="index.html">Ir al checador</a> · <a href="colaborador.html">Portal del colaborador</a></div>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img src="logo.png" alt=""><div><b id="brName">Cashless Colombia</b><span>RRHH · Gestión de Talento Humano</span></div></div>
+    <div class="small" style="padding:8px 18px;color:#a9b8e6" id="brNit"></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <a class="btn" href="colaborador.html" target="_blank">👤 Portal del colaborador</a>
+      <a class="btn" href="index.html" target="_blank">🕒 Kiosco de marcación</a>
+      <a class="btn" href="#" id="btnInstall">⬇ Instalar aplicación</a>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn">☰</button>
+      <input class="search" id="gSearch" placeholder="🔎 Buscar colaboradores…">
+      <div class="top-actions">
+        <button class="icon-btn" id="tInstall" title="Instalar aplicación">⬇</button>
+        <div class="bell" style="position:relative">
+          <button class="icon-btn" id="bellBtn" title="Alertas">🔔</button><span class="dot hidden" id="bellDot">0</span>
+          <div class="dropdown hidden" id="bellBox"></div>
+        </div>
+        <button class="icon-btn" id="helpBtn" title="Ayuda">❓</button>
+        <div style="position:relative">
+          <div class="userchip" id="userChip"><div class="avatar" id="uAv">A</div><span class="nm" id="uName">Administrador</span></div>
+          <div class="dropdown hidden" id="userBox" style="width:220px"></div>
+        </div>
+      </div>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="core.js"></script>
+<script src="face.js"></script>
+<script src="docs.js"></script>
+<script src="admin.js"></script>
+<script src="asistencia.js"></script>
+<script src="modulos.js"></script>
+<script src="analitica.js"></script>
+<script src="organigrama.js"></script>
+<script src="cumpleanos.js"></script>
+<script src="alertas.js"></script>
+<script src="seleccion.js"></script>
+<script>bootAdmin();</script>
+</body>
+</html>
